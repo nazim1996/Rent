@@ -1,22 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
-import Login from './auth/login/Login';
-import Signup from './auth/signup/signup';
-import {
-  BrowserRouter,
-  Routes,
-  Route
-} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import UserRouter from './router/UserRouter';
+import AuthRouter from './router/AuthRouter';
 
-function App() {
+const App =()=> {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem("auth");
+    if(token){
+      navigate("/dashboard");
+    } else {
+      navigate("/");
+    }
+  },[]);
+  
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-   </BrowserRouter>
-  );
+        <>
+          <UserRouter></UserRouter>
+          <AuthRouter></AuthRouter>
+        </>
+    );
 }
 
 export default App;

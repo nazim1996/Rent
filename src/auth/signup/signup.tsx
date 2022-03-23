@@ -5,40 +5,83 @@ import Box from '@mui/material/Box';
 import axios from "axios";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 
 const Signup = () =>{
-    const [loginCredential, setLoginCredential] = useState({
-        'email':'',
-        'password':''
-    });
+    const navigate = useNavigate();
+    const userDetails: any = {
+        name:{
+            "value": '',
+            "error" : ''
+
+        },
+        email: {
+            "value" : '',
+            "error" : ""
+        },
+        password: {
+            "value" : "",
+            "error" : ""
+        }
+    };
+    const [createCredential, setCreateCredential] = useState(userDetails);
     const [disabled, setDisabled] = useState(false);
     const [open, setOpen] = useState(false);
+    const [successLogin, setSuccessLogin] = useState(false);
 
     const handleClick =()=> {
         setDisabled(true);
-        let url ="http://domcare.idiosys.co.uk/api/web/index.php/secure/login";
-        axios.post(url,loginCredential).then(response=>{
-            console.log(response);
+        let url ="http://localhost:5050/users";
+        const sendCredential = {...createCredential};
+        const tempCredential = {
+            name: sendCredential.name.value,
+            email: sendCredential.email.value,
+            password: sendCredential.password.value
+        };
+        axios.post(url,tempCredential).then(response=>{
+            if(response.status === 200){
+                setSuccessLogin(true);
+                setOpen(true);
+                setTimeout(function(){
+                    navigate('/');
+                },3000);
+            }else{
+                console.log('hiiii');
+            }
 
         }).catch(function (error) {
+            const errorResponse: any = error.response.data.errors;
+            let errorUserDetails: any = {...createCredential};
+            errorUserDetails.name.error ="";
+            errorUserDetails.email.error ="";
+            errorUserDetails.password.error ="";
+            if(Object.keys(errorResponse).length){
+                for(const key in errorResponse){
+                    for(const keyError in errorUserDetails){
+                        if(keyError === key){
+                            errorUserDetails[keyError].error = errorResponse[key].msg;
+                            break;
+                        }
+                    }
+                }
+            }
+            setCreateCredential(errorUserDetails);
             setDisabled(false);
             setOpen(true);
             
-          });
+        });
     }
 
-    const handleChangeLoginValue =(data:any, flag:string)=>{
-        const temploginCredential = {...loginCredential};
-        if(flag ==="email"){
-            temploginCredential.email = data;
+    const handleChangeCreateValue =(data:any, flag:string)=>{
+        const temploginCredential = {...createCredential};
+        if(flag ==="name"){
+            temploginCredential.name.value = data;
+        }else if(flag ==="email"){
+            temploginCredential.email.value = data;
         }else{
-            temploginCredential.password = data;
+            temploginCredential.password.value = data;
         }
-        setLoginCredential(temploginCredential);
-        
-        
+        setCreateCredential(temploginCredential);
     }
 
     return(
@@ -57,7 +100,6 @@ const Signup = () =>{
                 }}
                 >
                         
-
                 <Box
                 sx={{
                     display: 'flex',
@@ -72,12 +114,14 @@ const Signup = () =>{
                     boxShadow: 3
                 }}
                 >
-                    <TextField 
-                    id="outlined-basic" 
+                    <TextField
+                    id="component-error"
+                    error={createCredential.name.error ? true : false}
                     label="Name" 
                     variant="outlined"
                     margin="normal"
-                    onChange={(e)=>handleChangeLoginValue(e.target.value,'email')}
+                    helperText={createCredential.name.error}
+                    onChange={(e)=>handleChangeCreateValue(e.target.value,'name')}
                  />
 
                 <TextField 
@@ -85,7 +129,9 @@ const Signup = () =>{
                     label="Email" 
                     variant="outlined"
                     margin="normal"
-                    onChange={(e)=>handleChangeLoginValue(e.target.value,'email')}
+                    error={createCredential.email.error ? true : false}
+                    helperText={createCredential.email.error}
+                    onChange={(e)=>handleChangeCreateValue(e.target.value,'email')}
                  />
 
                 <TextField 
@@ -94,7 +140,9 @@ const Signup = () =>{
                     label="Password" 
                     variant="outlined" 
                     margin="normal"
-                    onChange={(e)=>handleChangeLoginValue(e.target.value,'password')}
+                    error={createCredential.password.error ? true : false}
+                    helperText={createCredential.password.error}
+                    onChange={(e)=>handleChangeCreateValue(e.target.value,'password')}
                 />
                 <Box
                 sx={{
@@ -116,11 +164,12 @@ const Signup = () =>{
                 </Box>
                 
             </Box>
+
             <Snackbar open={open} autoHideDuration={300} >
-                <Alert severity='error' sx={{ width: '100%' }}>
-                Invalid credential
-                </Alert>
-            </Snackbar>
+                        <Alert severity={successLogin ? 'success' : 'error'} sx={{ width: '100%' }}>
+                       {successLogin ? "User was created successfully!" : "Error user creation"}
+                        </Alert>
+                    </Snackbar>
             </Box>
     )
 }
